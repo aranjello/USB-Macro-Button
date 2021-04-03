@@ -23,6 +23,7 @@ let writer;
 var progMode = false;
 let keys = [];
 let inputDone;
+let wantProg = false;
 
 const log = document.getElementById('log');
 const button = document.getElementById('button');
@@ -34,12 +35,11 @@ const resetButton = document.getElementById('resetButton');
 
 document.addEventListener('DOMContentLoaded', () => {
   butConnect.addEventListener('click', clickConnect);
-  progButton.addEventListener('click', clickSend);
+  progButton.addEventListener('click', saveAndEnd);
   resetButton.addEventListener('click', resetKeys);
   // CODELAB: Add feature detection here.
   const notSupported = document.getElementById('notSupported');
   notSupported.classList.toggle('hidden', 'serial' in navigator);
- 
 });
 
 var specialDict = {
@@ -113,9 +113,9 @@ async function connect() {
   //reader = port.readable.getReader();
   writer = port.writable.getWriter();
   readData();
-  document.getElementById('progButton').classList.toggle('hidden',!port);
-  document.getElementById('resetButton').classList.toggle('hidden',!port);
-
+  wantProg = true;
+  button.textContent = "pleases press a button to program";
+  writeData(-10);
 }
 
 async function readData(){
@@ -132,10 +132,10 @@ async function readData(){
     }
     // value is a Uint8Array.
     console.log(value);
-    if(parseInt(value) < 0){
-      console.log(parseInt(value)*-1);
+    if(parseInt(value) < 0 && wantProg){
       button.textContent = (parseInt(value)*-1).toString();
       resetKeys();
+      setProgMode(true);
     }
   }
 }
@@ -153,6 +153,9 @@ function convertToArray(data){
     if(data in specialDict){
       dataS = specialDict[data].toString();
     }else{
+      if(data >= 65 && data <= 90){
+        data += 32;
+      }
       dataS = data.toString();
     }
     var dataA = new Uint8Array(dataS.length);
@@ -173,6 +176,7 @@ function badDisconnect(){
   document.getElementById('resetButton').classList.toggle('hidden',!port);
   keys = [];
   showCurrKeys();
+  button.textContent = "The device was unplugged before the keys could be saved. Please reconnect and try again";
 }
 
 /**
@@ -181,6 +185,7 @@ function badDisconnect(){
  */
 async function disconnect() {
   // CODELAB: Close the input stream (reader).
+  writeData(-12);
   if (reader) {
     await reader.cancel();
     await inputDone.catch(() => {});
@@ -199,18 +204,28 @@ async function disconnect() {
   document.getElementById('resetButton').classList.toggle('hidden',!port);
   keys = [];
   showCurrKeys();
+  button.textContent = "";
 }
 
-async function clickSend(){
-  progMode = !progMode;
-  if(progMode){
+async function setProgMode(val){
+  if(val){
     writeData(-10);
     document.addEventListener('keydown',myKeyPress)
+    document.getElementById('progButton').classList.toggle('hidden',!port);
+    document.getElementById('resetButton').classList.toggle('hidden',!port);
   }else{
     writeData(-12);
     document.removeEventListener('keydown',myKeyPress)
+    button.textContent = "please press a button to start programming"
+    writeData(-10);
   }
-  toggleProgram(progMode)
+}
+
+function saveAndEnd(){
+  setProgMode(false);
+  wantProg = true;
+  document.getElementById('progButton').classList.toggle('hidden',port);
+  document.getElementById('resetButton').classList.toggle('hidden',port);
 }
 
 function resetKeys(){
@@ -245,16 +260,6 @@ function toggleUIConnected(connected) {
   butConnect.textContent = lbl;
 }
 
-function toggleProgram(connected) {
-  let lbl = 'start Program';
-  if (connected) {
-    lbl = 'stop Program';
-  }else{
-    keys = [];
-    showCurrKeys();
-  }
-  progButton.textContent = lbl;
-}
 
 function showCurrKeys(){
   log.textContent = "";
@@ -264,8 +269,8 @@ function showCurrKeys(){
     }else{
       log.textContent += String.fromCharCode(element) + "+"
     }
-    
   });
+  log.textContent = log.textContent.substring(0,log.textContent.length-1);
 }
 
 function myKeyPress(e){
@@ -276,9 +281,6 @@ function myKeyPress(e){
     keynum = e.keyCode;
   } else if(e.which){ // Netscape/Firefox/Opera                 
     keynum = e.which;
-  }
-  if(keynum >= 65 && keynum <= 90){
-    keynum += 32;
   }
   if(!keys.includes(keynum)){
     keys.push(keynum)
