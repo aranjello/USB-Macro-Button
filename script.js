@@ -30,13 +30,14 @@ const button = document.getElementById('button');
 const butConnect = document.getElementById('butConnect');
 const progButton = document.getElementById('progButton');
 const resetButton = document.getElementById('resetButton');
-
+const guiButton = document.getElementById('guiButton');
 
 
 document.addEventListener('DOMContentLoaded', () => {
   butConnect.addEventListener('click', clickConnect);
   progButton.addEventListener('click', saveAndEnd);
   resetButton.addEventListener('click', resetKeys);
+  guiButton.addEventListener('click',addLogoKey);
   // CODELAB: Add feature detection here.
   const notSupported = document.getElementById('notSupported');
   notSupported.classList.toggle('hidden', 'serial' in navigator);
@@ -93,8 +94,16 @@ var specialDictText = {
   //delete
   46 : "Delete",
   //f1-f12 = 112-123 : 194 - 205
-  112 : "F1"
+  112 : "F1",
+  //GUI
+  131 : "GUI"
 };
+
+function displayOptions(val){
+  progButton.classList.toggle('hidden',!val);
+  resetButton.classList.toggle('hidden',!val);
+  guiButton.classList.toggle('hidden',!val);
+}
 
 /**
  * @name connect
@@ -172,8 +181,7 @@ function convertToArray(data){
 function badDisconnect(){
   toggleUIConnected(false);
   port = null;
-  document.getElementById('progButton').classList.toggle('hidden',!port);
-  document.getElementById('resetButton').classList.toggle('hidden',!port);
+  displayOptions(false);
   keys = [];
   showCurrKeys();
   button.textContent = "The device was unplugged before the keys could be saved. Please reconnect and try again";
@@ -200,8 +208,7 @@ async function disconnect() {
   await port.close();
   port = null;
   toggleUIConnected(false);
-  document.getElementById('progButton').classList.toggle('hidden',!port);
-  document.getElementById('resetButton').classList.toggle('hidden',!port);
+  displayOptions(false);
   keys = [];
   showCurrKeys();
   button.textContent = "";
@@ -211,8 +218,7 @@ async function setProgMode(val){
   if(val){
     writeData(-10);
     document.addEventListener('keydown',myKeyPress)
-    document.getElementById('progButton').classList.toggle('hidden',!port);
-    document.getElementById('resetButton').classList.toggle('hidden',!port);
+    displayOptions(true);
   }else{
     writeData(-12);
     document.removeEventListener('keydown',myKeyPress)
@@ -221,11 +227,19 @@ async function setProgMode(val){
   }
 }
 
+function addLogoKey(){
+  var keynum = 131;
+  if(!keys.includes(keynum)){
+    keys.push(keynum)
+    writeData(keynum)
+    showCurrKeys();
+  }
+}
+
 function saveAndEnd(){
   setProgMode(false);
   wantProg = true;
-  document.getElementById('progButton').classList.toggle('hidden',port);
-  document.getElementById('resetButton').classList.toggle('hidden',port);
+  displayOptions(false);
 }
 
 function resetKeys(){
