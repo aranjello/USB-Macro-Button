@@ -30,6 +30,7 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
+  text-align: center;
 }
 
 html {
@@ -53,6 +54,7 @@ body {
 .header {
   align-content: center;
   align-items: stretch;
+  text-align: center;
   background: #3f51b5;
   box-shadow:
     0 4px 5px 0 rgba(0, 0, 0, 0.14),

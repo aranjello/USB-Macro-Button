@@ -1,7 +1,6 @@
 #include <Keyboard.h>
 #include <EEPROM.h>
 
-int keySet[6]{-1};
 int last = 0;
 
 bool progMode = false;
@@ -18,6 +17,11 @@ long offtimers[7]{0};
 
 bool buttonSet[7]{false};
 bool buttonSetOff[7]{true};
+
+
+struct { 
+  int keySet[6]{-1};
+} data;
 
 bool buttonDebounced(int i){
    //sample the state of the button - is it pressed or not?
@@ -61,7 +65,7 @@ bool buttonDebouncedOff(int i){
 
 void resetKeys(){
   for(int i = 0; i < 6; i++){
-    keySet[i] = -1;
+    data.keySet[i] = -1;
   }
   last = 0;
 }
@@ -72,9 +76,7 @@ void setup() {
   Serial.begin(9600);
   Serial.setTimeout(100);
   pinMode(2,INPUT_PULLUP);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB
-  }
+  EEPROM.get(0,data);
 }
 
 void loop() {
@@ -82,7 +84,7 @@ void loop() {
   if(Serial.available()){
     int i = Serial.parseInt();
     if(i == PROGMODE){
-      progMode = !progMode;
+      progMode = true;
       char message[25];
       sprintf(message,"progMode is %d",progMode);
       Serial.print(message);
@@ -91,17 +93,21 @@ void loop() {
         case PROGSTART:
           resetKeys();
           break;
+         case PROGEND:
+          progMode = false;
+          EEPROM.put(0,data);
+          break;
          default:
-          keySet[last] = i;
+          data.keySet[last] = i;
           last++;
          break;
       }
     }
   }
   if(!progMode && buttonDebounced(2)){
-    for(int i = 0;  keySet[i] != -1; i++){
-      Keyboard.press(keySet[i]);
-      Serial.print(keySet[i]);
+    for(int i = 0;  data.keySet[i] != -1; i++){
+      Keyboard.press(data.keySet[i]);
+      Serial.print(data.keySet[i]);
       delay(100);
     }
     Keyboard.releaseAll();

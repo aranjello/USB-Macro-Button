@@ -17,21 +17,24 @@
  */
 'use strict';
 
-let port;
+let port = null;
 let reader;
 let writer;
 var progMode = false;
+let keys = [];
+let inputDone;
 
 const log = document.getElementById('log');
 const butConnect = document.getElementById('butConnect');
 const progButton = document.getElementById('progButton');
+const resetButton = document.getElementById('resetButton');
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
   butConnect.addEventListener('click', clickConnect);
   progButton.addEventListener('click', clickSend);
-
-
+  resetButton.addEventListener('click', resetKeys);
   // CODELAB: Add feature detection here.
   const notSupported = document.getElementById('notSupported');
   notSupported.classList.toggle('hidden', 'serial' in navigator);
@@ -64,6 +67,33 @@ var specialDict = {
   112 : 194
 };
 
+var specialDictText = {
+  //tab
+  9 : "Tab",
+  //enter
+  13 : "Enter",
+  //Shift
+  16 : "Shift",
+  //ctrl
+  17 : "Control",
+  //alt
+  18 : "Alt",
+  //escape
+  27 : "Escape",
+  //left arrow,
+  37 : "Left Arrow",
+  //up arrow
+  38 : "Up Arrow",
+  //right arrow
+  39 : "Right Arrow",
+  //down arrow
+  40 : "Down Arrow",
+  //delete
+  46 : "Delete",
+  //f1-f12 = 112-123 : 194 - 205
+  112 : "F1"
+};
+
 /**
  * @name connect
  * Opens a Web Serial connection to a micro:bit and sets up the input and
@@ -76,17 +106,23 @@ async function connect() {
   // - Wait for the port to open.
   await port.open({ baudRate: 9600 });
   const textDecoder = new TextDecoderStream();
-  const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+  inputDone = port.readable.pipeTo(textDecoder.writable);
   reader = textDecoder.readable.getReader();
   //reader = port.readable.getReader();
   writer = port.writable.getWriter();
   readData();
+  document.getElementById('progButton').classList.toggle('hidden',!port);
+  document.getElementById('resetButton').classList.toggle('hidden',!port);
+
 }
 
 async function readData(){
   // Listen to data coming from the serial device.
   while (true) {
-    const { value, done } = await reader.read();
+    const { value, done } = await reader.read().catch(function(error){
+      badDisconnect();
+      return;
+    });
     if (done) {
       // Allow the serial port to be closed later.
       reader.releaseLock();
@@ -103,13 +139,9 @@ async function writeData(newData){
   await writer.write(data);
 }
 
-
 function convertToArray(data){
   if(typeof(data) == 'number'){
     console.log(data);
-    if(data == -10){
-      progMode = !progMode;
-    }
     var dataS;
     if(data in specialDict){
       dataS = specialDict[data].toString();
@@ -127,6 +159,15 @@ function convertToArray(data){
   return dataA;
 }
 
+function badDisconnect(){
+  toggleUIConnected(false);
+  port = null;
+  document.getElementById('progButton').classList.toggle('hidden',!port);
+  document.getElementById('resetButton').classList.toggle('hidden',!port);
+  keys = [];
+  showCurrKeys();
+}
+
 /**
  * @name disconnect
  * Closes the Web Serial connection.
@@ -137,25 +178,39 @@ async function disconnect() {
     await reader.cancel();
     await inputDone.catch(() => {});
     reader = null;
-    inputDone = null;
   }
   // CODELAB: Close the output stream.
-  if (outputStream) {
-    await outputStream.getWriter().close();
-    await outputDone;
-    outputStream = null;
-    outputDone = null;
+  if (writer) {
+    await writer.close();
+    writer = null;
   }
   // CODELAB: Close the port.
   await port.close();
   port = null;
   toggleUIConnected(false);
+  document.getElementById('progButton').classList.toggle('hidden',!port);
+  document.getElementById('resetButton').classList.toggle('hidden',!port);
+  keys = [];
+  showCurrKeys();
 }
 
 async function clickSend(){
-  writeData(-10);
-  writeData(-11);
+  progMode = !progMode;
+  if(progMode){
+    writeData(-10);
+    writeData(-11);
+    document.addEventListener('keydown',myKeyPress)
+  }else{
+    writeData(-12);
+    document.removeEventListener('keydown',myKeyPress)
+  }
   toggleProgram(progMode)
+}
+
+function resetKeys(){
+  writeData(-11);
+  keys = [];
+  showCurrKeys();
 }
 
 /**
@@ -166,12 +221,14 @@ async function clickConnect() {
   // CODELAB: Add disconnect code here.
   if (port) {
     await disconnect();
-    toggleUIConnected(true);
+    toggleUIConnected(false);
     return;
   }
   // CODELAB: Add connect code here.
   await connect();
   toggleUIConnected(true);
+  keys = [];
+  showCurrKeys();
 }
 
 function toggleUIConnected(connected) {
@@ -190,6 +247,18 @@ function toggleProgram(connected) {
   progButton.textContent = lbl;
 }
 
+function showCurrKeys(){
+  log.textContent = "";
+  keys.forEach(element => {
+    if(element in specialDictText){
+      log.textContent += specialDictText[element] + "+"
+    }else{
+      log.textContent += String.fromCharCode(element) + "+"
+    }
+    
+  });
+}
+
 function myKeyPress(e){
   var keynum;
   e.preventDefault();
@@ -202,7 +271,9 @@ function myKeyPress(e){
   if(keynum >= 65 && keynum <= 90){
     keynum += 32;
   }
-  //if(progMode){
+  if(!keys.includes(keynum)){
+    keys.push(keynum)
     writeData(keynum)
-  //}
+    showCurrKeys();
+  }
 }
