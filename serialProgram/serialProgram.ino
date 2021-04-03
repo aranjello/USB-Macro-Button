@@ -1,7 +1,11 @@
 #include <Keyboard.h>
 #include <EEPROM.h>
 
+#define numKeys 3
+
 int last = 0;
+
+int buttonToProgram = -1;
 
 bool progMode = false;
 
@@ -12,15 +16,15 @@ enum keyCodes{
 };
 
 long debounceDelay = 100;
-long timers[7]{0};
-long offtimers[7]{0};
+long timers[numKeys]{0};
+long offtimers[numKeys]{0};
 
-bool buttonSet[7]{false};
-bool buttonSetOff[7]{true};
+bool buttonSet[numKeys]{false};
+bool buttonSetOff[numKeys]{true};
 
 
 struct { 
-  int keySet[6]{-1};
+  int keySet[numKeys][6]{-1};
 } data;
 
 bool buttonDebounced(int i){
@@ -63,19 +67,23 @@ bool buttonDebouncedOff(int i){
     return false;
 }
 
-void resetKeys(){
-  for(int i = 0; i < 6; i++){
-    data.keySet[i] = -1;
+void resetKeys(int i){
+  for(int j = 0; j < 6; j++){
+    data.keySet[i][j] = -1;
   }
   last = 0;
 }
 
 void setup() {
-  resetKeys();
+  for(int i = 0; i < numKeys; i++){
+    resetKeys(i);
+  }
   // put your setup code here, to run once:
   Serial.begin(9600);
   Serial.setTimeout(100);
-  pinMode(2,INPUT_PULLUP);
+  for(int i = 0; i < numKeys; i++){
+      pinMode(i+2,INPUT_PULLUP);
+  }
   EEPROM.get(0,data);
 }
 
@@ -89,27 +97,41 @@ void loop() {
       sprintf(message,"progMode is %d",progMode);
       Serial.print(message);
     }else if(progMode){
-      switch(i){
-        case PROGSTART:
-          resetKeys();
-          break;
-         case PROGEND:
-          progMode = false;
-          EEPROM.put(0,data);
-          break;
-         default:
-          data.keySet[last] = i;
-          last++;
-         break;
+      if(buttonToProgram != -1){
+        switch(i){
+          case PROGSTART:
+            resetKeys(buttonToProgram);
+            break;
+           case PROGEND:
+            progMode = false;
+            EEPROM.put(0,data);
+            break;
+           default:
+            data.keySet[buttonToProgram][last] = i;
+            last++;
+           break;
+        }
+      }
+    }
+  }else if(progMode){
+    for(int j = 2; j < numKeys+2; j++){
+        if(buttonDebounced(j) && buttonToProgram != j){
+          buttonToProgram = j-2;
+          last = 0;
+          Serial.print((j-1)*-1);
+        }
+  }
+  }
+  if(!progMode){
+    for(int i = 0; i < numKeys; i++){
+      if(buttonDebounced(i+2)){
+        for(int j = 0;  data.keySet[i][j] != -1; j++){
+          Keyboard.press(data.keySet[i][j]);
+          Serial.print(data.keySet[i][j]);
+          delay(100);
+        }
+        Keyboard.releaseAll();
       }
     }
   }
-  if(!progMode && buttonDebounced(2)){
-    for(int i = 0;  data.keySet[i] != -1; i++){
-      Keyboard.press(data.keySet[i]);
-      Serial.print(data.keySet[i]);
-      delay(100);
-    }
-    Keyboard.releaseAll();
   }
-}

@@ -25,6 +25,7 @@ let keys = [];
 let inputDone;
 
 const log = document.getElementById('log');
+const button = document.getElementById('button');
 const butConnect = document.getElementById('butConnect');
 const progButton = document.getElementById('progButton');
 const resetButton = document.getElementById('resetButton');
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // CODELAB: Add feature detection here.
   const notSupported = document.getElementById('notSupported');
   notSupported.classList.toggle('hidden', 'serial' in navigator);
+ 
 });
 
 var specialDict = {
@@ -130,6 +132,11 @@ async function readData(){
     }
     // value is a Uint8Array.
     console.log(value);
+    if(parseInt(value) < 0){
+      console.log(parseInt(value)*-1);
+      button.textContent = (parseInt(value)*-1).toString();
+      resetKeys();
+    }
   }
 }
 
@@ -198,7 +205,6 @@ async function clickSend(){
   progMode = !progMode;
   if(progMode){
     writeData(-10);
-    writeData(-11);
     document.addEventListener('keydown',myKeyPress)
   }else{
     writeData(-12);
@@ -243,6 +249,9 @@ function toggleProgram(connected) {
   let lbl = 'start Program';
   if (connected) {
     lbl = 'stop Program';
+  }else{
+    keys = [];
+    showCurrKeys();
   }
   progButton.textContent = lbl;
 }
