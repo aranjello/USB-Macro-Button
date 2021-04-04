@@ -227,10 +227,9 @@ async function setProgMode(val){
     document.addEventListener('keydown',myKeyPress)
     displayOptions(true);
   }else{
-    writeData(-12);
+    writeData(-13);
     document.removeEventListener('keydown',myKeyPress)
     button.textContent = "please press a button to start programming"
-    writeData(-10);
   }
 }
 

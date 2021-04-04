@@ -1,7 +1,7 @@
 #include <Keyboard.h>
 #include <EEPROM.h>
 
-#define numKeys 3
+#define numKeys 2
 
 int last = 0;
 
@@ -12,7 +12,8 @@ bool progMode = false;
 enum keyCodes{
   PROGMODE = -10,
   PROGSTART = -11,
-  PROGEND = -12
+  PROGEND = -12,
+  PUTDATA = -13,
 };
 
 long debounceDelay = 100;
@@ -102,14 +103,18 @@ void loop() {
           case PROGSTART:
             resetKeys(buttonToProgram);
             break;
-           case PROGEND:
-            progMode = false;
+           case PUTDATA:
             EEPROM.put(0,data);
+            buttonToProgram = -1;
             break;
            default:
             data.keySet[buttonToProgram][last] = i;
             last++;
            break;
+        }
+      }else{
+        if(i == PROGEND){
+          progMode = false;
         }
       }
     }
