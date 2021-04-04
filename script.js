@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 var specialDict = {
+  //backspace
+  8 : 178,
   //tab
   9 : 179,
   //enter
@@ -71,6 +73,8 @@ var specialDict = {
 };
 
 var specialDictText = {
+  //backspace
+  8 : "backspace",
   //tab
   9 : "Tab",
   //enter
@@ -83,6 +87,8 @@ var specialDictText = {
   18 : "Alt",
   //escape
   27 : "Escape",
+  //space
+  32 : "space",
   //left arrow,
   37 : "Left Arrow",
   //up arrow
@@ -103,6 +109,7 @@ function displayOptions(val){
   progButton.classList.toggle('hidden',!val);
   resetButton.classList.toggle('hidden',!val);
   guiButton.classList.toggle('hidden',!val);
+  butConnect.classList.toggle('hidden',val);
 }
 
 /**
@@ -269,7 +276,7 @@ async function clickConnect() {
 function toggleUIConnected(connected) {
   let lbl = 'Connect';
   if (connected) {
-    lbl = 'Disconnect';
+    lbl = 'Disconnect and save program';
   }
   butConnect.textContent = lbl;
 }
