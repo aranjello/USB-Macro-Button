@@ -24,6 +24,8 @@ var progMode = false;
 let keys = [];
 let inputDone;
 let wantProg = false;
+let waitForVer = false;
+let verID;
 
 const log = document.getElementById('log');
 const button = document.getElementById('button');
@@ -129,9 +131,10 @@ async function connect() {
   //reader = port.readable.getReader();
   writer = port.writable.getWriter();
   readData();
-  wantProg = true;
+  wantProg = false;
   button.textContent = "pleases press a button to program";
-  writeData(-10);
+  writeData(-14);
+  waitForVer = true;
 }
 
 async function readData(){
@@ -148,10 +151,17 @@ async function readData(){
     }
     // value is a Uint8Array.
     console.log(value);
-    if(parseInt(value) > 0 && wantProg){
-      button.textContent = (parseInt(value)).toString();
-      resetKeys();
-      setProgMode(true);
+    if(parseInt(value) > 0){
+      if(wantProg){
+        button.textContent = (parseInt(value)).toString();
+        resetKeys();
+        setProgMode(true);
+      }else if(waitForVer){
+        verID = parseInt(value);
+        waitForVer = false;
+        writeData(-10);
+        wantProg = true;
+      }
     }
   }
 }
@@ -223,7 +233,7 @@ async function disconnect() {
 
 async function setProgMode(val){
   if(val){
-    writeData(-10);
+    //writeData(-10);
     document.addEventListener('keydown',myKeyPress)
     displayOptions(true);
   }else{

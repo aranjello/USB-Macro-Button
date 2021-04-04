@@ -2,6 +2,7 @@
 #include <EEPROM.h>
 
 #define numKeys 2
+#define versionID 1
 
 int last = 0;
 
@@ -14,6 +15,7 @@ enum keyCodes{
   PROGSTART = -11,
   PROGEND = -12,
   PUTDATA = -13,
+  VERQUESTION = -14
 };
 
 long debounceDelay = 100;
@@ -92,11 +94,15 @@ void loop() {
   // put your main code here, to run repeatedly:
   if(Serial.available()){
     int i = Serial.parseInt();
-    if(i == PROGMODE){
+    if(i == VERQUESTION){
+      Serial.print(versionID);
+    }
+    else if(i == PROGMODE){
       progMode = true;
       char message[25];
       sprintf(message,"progMode is %d",progMode);
       Serial.print(message);
+      buttonToProgram = -1;
     }else if(progMode){
       if(buttonToProgram != -1){
         switch(i){
@@ -125,7 +131,7 @@ void loop() {
           last = 0;
           Serial.print((j-1));
         }
-  }
+    }
   }
   if(!progMode){
     for(int i = 0; i < numKeys; i++){
