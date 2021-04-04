@@ -115,10 +115,10 @@ void loop() {
     }
   }else if(progMode){
     for(int j = 2; j < numKeys+2; j++){
-        if(buttonDebounced(j) && buttonToProgram != j){
+        if(buttonDebounced(j) && buttonToProgram+2 != j){
           buttonToProgram = j-2;
           last = 0;
-          Serial.print((j-1)*-1);
+          Serial.print((j-1));
         }
   }
   }

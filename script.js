@@ -148,8 +148,8 @@ async function readData(){
     }
     // value is a Uint8Array.
     console.log(value);
-    if(parseInt(value) < 0 && wantProg){
-      button.textContent = (parseInt(value)*-1).toString();
+    if(parseInt(value) > 0 && wantProg){
+      button.textContent = (parseInt(value)).toString();
       resetKeys();
       setProgMode(true);
     }
