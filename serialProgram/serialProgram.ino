@@ -1,7 +1,7 @@
 #include <Keyboard.h>
 #include <EEPROM.h>
 
-#define numKeys 2
+#define numKeys 12
 #define versionID 1
 
 int last = 0;
@@ -28,7 +28,7 @@ bool buttonSetOff[numKeys]{true};
 
 
 struct { 
-  int keySet[numKeys][50]{-1};
+  int keySet[numKeys][25]{-1};
 } data;
 
 bool buttonDebounced(int i){
@@ -72,7 +72,7 @@ bool buttonDebouncedOff(int i){
 }
 
 void resetKeys(int i){
-  for(int j = 0; j < 50; j++){
+  for(int j = 0; j < 25; j++){
     data.keySet[i][j] = -1;
   }
   last = 0;
@@ -88,7 +88,7 @@ void setup() {
   for(int i = 0; i < numKeys; i++){
       pinMode(i+2,INPUT_PULLUP);
   }
-  EEPROM.get(0,data);
+  EEPROM.put(0,data);
 }
 
 void loop() {
