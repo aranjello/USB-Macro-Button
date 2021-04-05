@@ -88,7 +88,7 @@ void setup() {
   for(int i = 0; i < numKeys; i++){
       pinMode(i+2,INPUT_PULLUP);
   }
-  EEPROM.put(0,data);
+  EEPROM.get(0,data);
 }
 
 void loop() {
