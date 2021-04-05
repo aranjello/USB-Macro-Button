@@ -9,6 +9,7 @@ int last = 0;
 int buttonToProgram = -1;
 
 bool progMode = false;
+bool releaseMode = false;
 
 enum keyCodes{
   PROGMODE = -10,
@@ -27,7 +28,7 @@ bool buttonSetOff[numKeys]{true};
 
 
 struct { 
-  int keySet[numKeys][6]{-1};
+  int keySet[numKeys][50]{-1};
 } data;
 
 bool buttonDebounced(int i){
@@ -71,7 +72,7 @@ bool buttonDebouncedOff(int i){
 }
 
 void resetKeys(int i){
-  for(int j = 0; j < 6; j++){
+  for(int j = 0; j < 50; j++){
     data.keySet[i][j] = -1;
   }
   last = 0;
@@ -83,7 +84,7 @@ void setup() {
   }
   // put your setup code here, to run once:
   Serial.begin(9600);
-  Serial.setTimeout(100);
+  Serial.setTimeout(10);
   for(int i = 0; i < numKeys; i++){
       pinMode(i+2,INPUT_PULLUP);
   }
@@ -103,6 +104,7 @@ void loop() {
       sprintf(message,"progMode is %d",progMode);
       Serial.print(message);
       buttonToProgram = -1;
+      releaseMode = false;
     }else if(progMode){
       if(buttonToProgram != -1){
         switch(i){
@@ -112,6 +114,7 @@ void loop() {
            case PUTDATA:
             EEPROM.put(0,data);
             buttonToProgram = -1;
+            releaseMode = false;
             break;
            default:
             data.keySet[buttonToProgram][last] = i;
@@ -137,11 +140,23 @@ void loop() {
     for(int i = 0; i < numKeys; i++){
       if(buttonDebounced(i+2)){
         for(int j = 0;  data.keySet[i][j] != -1; j++){
-          Keyboard.press(data.keySet[i][j]);
           Serial.print(data.keySet[i][j]);
-          delay(100);
+          if(data.keySet[i][j] == -100){
+            releaseMode = !releaseMode;
+          }else if(data.keySet[i][j] == -101){
+            Keyboard.releaseAll();
+          }else if(data.keySet[i][j] == -102){
+            delay(100);
+          }
+          else{
+            Keyboard.press(data.keySet[i][j]);
+            if(releaseMode){
+              Keyboard.release(data.keySet[i][j]);
+            }
+          }
         }
         Keyboard.releaseAll();
+        releaseMode = false;
       }
     }
   }

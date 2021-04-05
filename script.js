@@ -9,6 +9,7 @@ let inputDone;
 let wantProg = false;
 let waitForVer = false;
 let verID;
+let multipleOK = false;
 
 const log = document.getElementById('log');
 const button = document.getElementById('button');
@@ -16,17 +17,51 @@ const butConnect = document.getElementById('butConnect');
 const progButton = document.getElementById('progButton');
 const resetButton = document.getElementById('resetButton');
 const guiButton = document.getElementById('guiButton');
-
+const releaseButton = document.getElementById('releaseButton');
+const releaseAllButton = document.getElementById('releaseAllButton');
+const delayButton = document.getElementById('addDelay');
 
 document.addEventListener('DOMContentLoaded', () => {
   butConnect.addEventListener('click', clickConnect);
   progButton.addEventListener('click', saveAndEnd);
   resetButton.addEventListener('click', resetKeys);
   guiButton.addEventListener('click',addLogoKey);
+  releaseButton.addEventListener('click',changeRelease);
+  releaseAllButton.addEventListener('click',releaseAll);
+  delayButton.addEventListener('click',addDelaySend);
   // CODELAB: Add feature detection here.
   const notSupported = document.getElementById('notSupported');
   notSupported.classList.toggle('hidden', 'serial' in navigator);
 });
+
+var stupidKeys = {
+  //,
+  188 : 44,
+  //.
+  190 : 46,
+  ///
+  191 : 47,
+  //;
+  186 : 59,
+  //'
+  222 : 39,
+  //[
+  219 : 91,
+  //]
+  221 : 93,
+  //-
+  189 : 45,
+  //=
+  187 : 61,
+  //`
+  192 : 96,
+  //\
+  220 : 92,
+  //delete
+  46 : 127,
+  //right arrow
+  39 : 126
+};
 
 var specialDict = {
   //backspace
@@ -48,16 +83,22 @@ var specialDict = {
   //up arrow
   38 : 218,
   //right arrow
-  39 : 215,
+  126 : 215,
   //down arrow
   40 : 217,
   //delete
-  46 : 212,
+  127 : 212,
   //f1-f12 = 112-123 : 194 - 205
   112 : 194
 };
 
 var specialDictText = {
+  //delay
+  "-102" : "delay",
+  //releaseAll
+  "-101" : "release all",
+  //release mode
+  "-100" : "change mode",
   //backspace
   8 : "backspace",
   //tab
@@ -79,11 +120,11 @@ var specialDictText = {
   //up arrow
   38 : "Up Arrow",
   //right arrow
-  39 : "Right Arrow",
+  126 : "Right Arrow",
   //down arrow
   40 : "Down Arrow",
   //delete
-  46 : "Delete",
+  127 : "Delete",
   //f1-f12 = 112-123 : 194 - 205
   112 : "F1",
   //GUI
@@ -94,6 +135,9 @@ function displayOptions(val){
   progButton.classList.toggle('hidden',!val);
   resetButton.classList.toggle('hidden',!val);
   guiButton.classList.toggle('hidden',!val);
+  releaseButton.classList.toggle('hidden',!val);
+  releaseAllButton.classList.toggle('hidden',!val);
+  delayButton.classList.toggle('hidden',!val);
   butConnect.classList.toggle('hidden',val);
 }
 
@@ -118,6 +162,7 @@ async function connect() {
   button.textContent = "pleases press a button to program";
   writeData(-14);
   waitForVer = true;
+  multipleOK = false;
 }
 
 async function readData(){
@@ -153,6 +198,25 @@ async function writeData(newData){
   const data = convertToArray(newData);
   console.log(data);
   await writer.write(data);
+}
+
+function addDelaySend(){
+  writeData(-102);
+  keys.push(-102);
+  showCurrKeys();
+}
+
+function changeRelease(){
+  multipleOK = !multipleOK;
+  writeData(-100);
+  keys.push(-100);
+  showCurrKeys();
+}
+
+function releaseAll(){
+  writeData(-101);
+  keys.push(-101);
+  showCurrKeys();
 }
 
 function convertToArray(data){
@@ -279,6 +343,8 @@ function showCurrKeys(){
   keys.forEach(element => {
     if(element in specialDictText){
       log.textContent += specialDictText[element] + "+"
+    }else if(element.toString() in specialDictText){
+      log.textContent += specialDictText[element.toString()] + "+"
     }else{
       log.textContent += String.fromCharCode(element) + "+"
     }
@@ -295,7 +361,10 @@ function myKeyPress(e){
   } else if(e.which){ // Netscape/Firefox/Opera                 
     keynum = e.which;
   }
-  if(!keys.includes(keynum)){
+  if(keynum in stupidKeys){
+    keynum = stupidKeys[keynum];
+  }
+  if(multipleOK || !keys.includes(keynum)){
     keys.push(keynum)
     writeData(keynum)
     showCurrKeys();
