@@ -10,6 +10,7 @@ let wantProg = false;
 let waitForVer = false;
 let verID;
 let multipleOK = false;
+let savedButton = 0;
 
 const log = document.getElementById('log');
 const button = document.getElementById('button');
@@ -182,6 +183,7 @@ async function readData(){
     if(parseInt(value) > 0){
       if(wantProg){
         button.textContent = (parseInt(value)).toString();
+        savedButton = parseInt(value);
         resetKeys();
         setProgMode(true);
       }else if(waitForVer){
@@ -309,6 +311,8 @@ function resetKeys(){
   writeData(-11);
   keys = [];
   showCurrKeys();
+  multipleOK = false;
+  button.textContent = savedButton;
 }
 
 /**
@@ -364,9 +368,11 @@ function myKeyPress(e){
   if(keynum in stupidKeys){
     keynum = stupidKeys[keynum];
   }
-  if(multipleOK || !keys.includes(keynum)){
+  if(keys.length < 25 && (multipleOK || !keys.includes(keynum))){
     keys.push(keynum)
     writeData(keynum)
     showCurrKeys();
+  }else if(keys.length >= 25){
+    button.textContent = "can only program 25 actions at a time";
   }
 }

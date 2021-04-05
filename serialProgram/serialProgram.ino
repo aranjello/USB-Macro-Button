@@ -140,7 +140,6 @@ void loop() {
     for(int i = 0; i < numKeys; i++){
       if(buttonDebounced(i+2)){
         for(int j = 0;  data.keySet[i][j] != -1; j++){
-          Serial.print(data.keySet[i][j]);
           if(data.keySet[i][j] == -100){
             releaseMode = !releaseMode;
           }else if(data.keySet[i][j] == -101){
