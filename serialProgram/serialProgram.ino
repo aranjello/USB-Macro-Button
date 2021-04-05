@@ -4,11 +4,15 @@
 #define numKeys 12
 #define versionID 1
 
+//index of the last position of currently programed key array
 int last = 0;
 
+//button that was selected to program
 int buttonToProgram = -1;
 
+//determine whether the button will accept programming or send keypresses
 bool progMode = false;
+//determine whether or not each key press wil be hold or imediately released
 bool releaseMode = false;
 
 enum keyCodes{
@@ -20,17 +24,20 @@ enum keyCodes{
 };
 
 long debounceDelay = 100;
+
+//holds debounce timers for pressing the keys
 long timers[numKeys]{0};
-long offtimers[numKeys]{0};
 
+//holds last state of buttons
 bool buttonSet[numKeys]{false};
-bool buttonSetOff[numKeys]{true};
 
-
+//data struct to hold the key arrays for reading and writing to EEPROM 
+//in order to retain key arrays on power cycle
 struct { 
   int keySet[numKeys][25]{-1};
 } data;
 
+//Function to read the debounced value of a button press
 bool buttonDebounced(int i){
    //sample the state of the button - is it pressed or not?
   bool buttonState = !digitalRead(i);
@@ -51,26 +58,7 @@ bool buttonDebounced(int i){
     return false;
 }
 
-bool buttonDebouncedOff(int i){
-    //sample the state of the button - is it pressed or not?
-  bool buttonState = digitalRead(i);
-
-  //filter out any noise by setting a time buffer
-  if ( (millis() - offtimers[i-2]) > debounceDelay) {
-    //if the button has been pressed, lets toggle the LED from "off to on" or "on to off"
-    if (buttonState == HIGH && !buttonSetOff[i-2]) {
-      offtimers[i-2] = millis(); //set the current time
-      buttonSetOff[i-2] = true;
-      return true;
-    }
-    else if (buttonState == LOW && buttonSetOff[i-2]) {
-      offtimers[i-2] = millis(); //set the current time
-      buttonSetOff[i-2] = false;
-    }
-  }
-    return false;
-}
-
+//restes the key array for the given index i
 void resetKeys(int i){
   for(int j = 0; j < 25; j++){
     data.keySet[i][j] = -1;
@@ -78,11 +66,11 @@ void resetKeys(int i){
   last = 0;
 }
 
+//Arduino setup function
 void setup() {
   for(int i = 0; i < numKeys; i++){
     resetKeys(i);
   }
-  // put your setup code here, to run once:
   Serial.begin(9600);
   Serial.setTimeout(10);
   for(int i = 0; i < numKeys; i++){
