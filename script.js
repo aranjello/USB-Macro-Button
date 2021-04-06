@@ -77,6 +77,8 @@ var specialDict = {
   17 : 128,
   //alt
   18 : 130,
+  //caps lock
+  20 : 193,
   //escape
   27 : 177,
   //left arrow,
@@ -90,7 +92,18 @@ var specialDict = {
   //delete
   127 : 212,
   //f1-f12 = 112-123 : 194 - 205
-  112 : 194
+  112 : 194,
+  113 : 195,
+  114 : 196,
+  115 : 197,
+  116 : 198,
+  117 : 199,
+  118 : 200,
+  119 : 201,
+  120 : 202,
+  121 : 203,
+  122 : 204,
+  123 : 205
 };
 
 var specialDictText = {
@@ -112,6 +125,8 @@ var specialDictText = {
   17 : "Control",
   //alt
   18 : "Alt",
+  //caps lock
+  20 : "caps lock",
   //escape
   27 : "Escape",
   //space
@@ -128,6 +143,17 @@ var specialDictText = {
   127 : "Delete",
   //f1-f12 = 112-123 : 194 - 205
   112 : "F1",
+  113 : "F2",
+  114 : "F3",
+  115 : "F4",
+  116 : "F5",
+  117 : "F6",
+  118 : "F7",
+  119 : "F8",
+  120 : "F9",
+  121 : "F10",
+  122 : "F11",
+  123 : "F12",
   //GUI
   131 : "GUI"
 };
@@ -359,11 +385,16 @@ function showCurrKeys(){
 function myKeyPress(e){
   var keynum;
   e.preventDefault();
+  
   //e.stopPropagation();
   if(window.event) { // IE                  
     keynum = e.keyCode;
   } else if(e.which){ // Netscape/Firefox/Opera                 
     keynum = e.which;
+  }
+  console.log(e.location);
+  if(e.location == 3 || keynum == 144){
+    return;
   }
   if(keynum in stupidKeys){
     keynum = stupidKeys[keynum];
